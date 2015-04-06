@@ -87,7 +87,7 @@ def get_hotellist_page(city_url, page_count, city, datadir='data/'):
     return html
 
 
-def parse_hotellist_page(html):
+def parse_hotellist_page(html, hotels):
     """Parses the website with the hotel list and prints the hotel name, the
     number of stars and the number of reviews it has. If there is a next page
     in the hotel list, it returns a list to that page. Otherwise, it exits the
@@ -127,7 +127,8 @@ def parse_hotellist_page(html):
         #get URL of hotel page (like below)
         title_link = hotel_box.find("a", {"target" : "_blank"})['href']
         title_link = base_url + title_link
-        parse_review(title_link)
+        hotel = parse_review(title_link, hotel_name)
+        hotels[hotel_name] = hotel
             
     # Get next URL page if exists, otherwise exit
     div = soup.find("div", {"class" : "pagination paginationfillbtm"})
@@ -143,7 +144,8 @@ def parse_hotellist_page(html):
             log.info("Next url is %s" % href['href'])
             return href['href']
 
-def parse_review(url):
+def parse_review(url, name):
+    name={}
     #get HTML of the URL (like get_hotellist_page function)
     time.sleep(2)
     headers = { 'User-Agent' : user_agent }
@@ -160,52 +162,55 @@ def parse_review(url):
     poor = ratings[3]
     terrible = ratings[4]
     rating_excellent = (excellent.find('span', {'class':'compositeCount'}).find(text=True)).strip()
-    log.info('Excellent ratings: %s' %rating_excellent)
+    name['Excellent ratings'] = rating_excellent
     rating_verygood = (verygood.find('span', {'class':'compositeCount'}).find(text=True)).strip()
-    log.info('Very good ratings: %s' %rating_verygood)
+    name['Very good ratings'] = rating_verygood
     rating_average = (average.find('span', {'class':'compositeCount'}).find(text=True)).strip()
-    log.info('Average ratings: %s' %rating_average)
+    name['Average ratings'] = rating_average
     rating_poor = (poor.find('span', {'class':'compositeCount'}).find(text=True)).strip()
-    log.info('Poor ratings: %s' %rating_poor)
+    name['Poor ratings'] = rating_poor
     rating_terrible = (terrible.find('span', {'class':'compositeCount'}).find(text=True)).strip()
-    log.info('Terrible ratings: %s' %rating_terrible)
+    name['Terrible ratings'] = rating_terrible
+    avg_score = (rating_excellent*5 + rating_verygood*4 + rating_average*3 + rating_poor*2 + rating_terrible*1)/(rating_excellent+rating_verygood+rating_average+rating_poor+rating_terrible)
+    name['Average score'] = avg_score
     #see reviews for different types of people
     peopletypes = databox.findAll('div', {'class':'filter_connection_wrapper'})
     families = peopletypes[0]
     couples = peopletypes[1]
     solo = peopletypes[2]
     business = peopletypes[3]
-    f = families.find('div', {'class':'value'}).find(text=True)
-    log.info('Family ratings: %s' %f.strip())
-    c = couples.find('div', {'class':'value'}).find(text=True)
-    log.info('Couple ratings: %s' %c.strip())
-    s = solo.find('div', {'class':'value'}).find(text=True)
-    log.info('Solo ratings: %s' %s.strip())
-    b = business.find('div', {'class':'value'}).find(text=True)
-    log.info('Business ratings: %s' %b.strip())
+    f = (families.find('div', {'class':'value'}).find(text=True)).strip()
+    name['Family ratings'] = f
+    c = (couples.find('div', {'class':'value'}).find(text=True)).strip()
+    name['Couple ratings'] = c
+    s = (solo.find('div', {'class':'value'}).find(text=True)).strip()
+    name['Solo ratings'] = s
+    b = (business.find('div', {'class':'value'}).find(text=True)).strip()
+    name['Business ratings'] = b
     #rating summary
     summaries = databox.findAll('li')
     sleep_quality = summaries[0].find('img')
     stars = sleep_quality['alt']
-    log.info('Sleep Quality: %s' %stars)
+    name['Sleep Quality'] = stars
     location = summaries[1].find('img')
     stars1 = location['alt']
-    log.info('Location: %s' %stars1)
+    name['Location']=stars1
     rooms = summaries[2].find('img')
     stars2 = location['alt']
-    log.info('Rooms: %s' %stars2)
+    name['Rooms']=stars2
     service = summaries[3].find('img')
     stars3 = location['alt']
-    log.info('Service: %s:' %stars3)
+    name['Service']=stars3
     value = summaries[4].find('img')
     stars4 = value['alt']
-    log.info('Value: %s' %stars4)
+    name['Value']=stars4
     cleanliness = summaries[5].find('img')
     stars5 = cleanliness['alt']
-    log.info('Cleanliness: %s' %stars5)
-    #average score
-    avg_score = 
+    name['Cleanliness']=stars5
+    return name
+
 def scrape_hotels(city,  state, datadir='data/'):
+    hotels={}
     """Runs the main scraper code
     Parameters
     ----------
@@ -229,7 +234,8 @@ def scrape_hotels(city,  state, datadir='data/'):
     while(True):
         c += 1
         html = get_hotellist_page(city_url, c, city, datadir)
-        city_url = parse_hotellist_page(html)
+        (city_url, hotels) = parse_hotellist_page(html, hotels)
+    return hotels
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape tripadvisor')
