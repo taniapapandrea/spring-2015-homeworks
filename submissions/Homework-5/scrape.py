@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 import os
 import sys
 import time
@@ -20,15 +17,26 @@ base_url = "http://www.tripadvisor.com/"
 user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36"
 
 
+parser = argparse.ArgumentParser(description='Scrape tripadvisor')
+parser.add_argument('-datadir', type=str,
+                    help='Directory to store raw html files',
+                    default="data/")
+parser.add_argument('-state', type=str,
+                    help='State for which the hotel data is required.',
+                    required=True)
+parser.add_argument('-city', type=str,
+                    help='City for which the hotel data is required.',
+                    required=True)
+args = parser.parse_args()
 
-def get_city_page(city, state, datadir):
+
+def get_city_page(city, state):
     """ Returns the URL of the list of the hotels in a city. Corresponds to
     STEP 1 & 2 of the slides.
     Parameters
     ----------
     city : str
     state : str
-    datadir : str
     Returns
     -------
     url : str
@@ -40,7 +48,7 @@ def get_city_page(city, state, datadir):
     headers = {'User-Agent': user_agent}
     response = requests.get(url, headers=headers)
     html = response.text.encode('utf-8')
-    with open(os.path.join(datadir, city + '-tourism-page.html'), "w") as h:
+    with open(os.path.join(args.datadir, city + '-tourism-page.html'), "w") as h:
         h.write(html)
 
     # Use BeautifulSoup to extract the url for the list of hotels in
@@ -55,7 +63,7 @@ def get_city_page(city, state, datadir):
     return city_url['href']
 
 
-def get_hotellist_page(city_url, page_count, city, datadir='data/'):
+def get_hotellist_page(city_url, page_count):
     """ Returns the hotel list HTML. The URL of the list is the result of
     get_city_page(). Also, saves a copy of the HTML to the disk. Corresponds to
     STEP 3 of the slides.
@@ -65,10 +73,6 @@ def get_hotellist_page(city_url, page_count, city, datadir='data/'):
         The relative URL of the hotels in the city we are interested in.
     page_count : int
         The page that we want to fetch. Used for keeping track of our progress.
-    city : str
-        The name of the city that we are interested in.
-    datadir : str, default is 'data/'
-        The directory in which to save the downloaded html.
     Returns
     -------
     html : str
@@ -82,7 +86,7 @@ def get_hotellist_page(city_url, page_count, city, datadir='data/'):
     response = requests.get(url, headers=headers)
     html = response.text.encode('utf-8')
     # Save the webpage
-    with open(os.path.join(datadir, city + '-hotelist-' + str(page_count) + '.html'), "w") as h:
+    with open(os.path.join(args.datadir, args.city + '-hotelist-' + str(page_count) + '.html'), "w") as h:
         h.write(html)
     return html
 
@@ -127,7 +131,11 @@ def parse_hotellist_page(html):
         #get URL of hotel page (like below)
         title_link = hotel_box.find("a", {"target" : "_blank"})['href']
         title_link = base_url + title_link
-        parse_review(title_link)
+
+        #get HTML of the URL (like get_hotellist_page function)
+            
+
+        #parse HTML to get REVIEW_FILTER_FORM like above
             
     # Get next URL page if exists, otherwise exit
     div = soup.find("div", {"class" : "pagination paginationfillbtm"})
@@ -143,88 +151,18 @@ def parse_hotellist_page(html):
             log.info("Next url is %s" % href['href'])
             return href['href']
 
-def parse_review(url):
-    #get HTML of the URL (like get_hotellist_page function)
-    time.sleep(2)
-    headers = { 'User-Agent' : user_agent }
-    response = requests.get(url, headers=headers)
-    html = response.text.encode('utf-8')
-    #parse HTML to get REVIEW_FILTER_FORM like above
-    soup = BeautifulSoup(html)
-    databox = soup.find('div', {'class':'content wrap trip_type_layout'})
-    #traveler ratings
-    ratings = databox.findAll('div', {'class':'wrap row'})
-    excellent = ratings[0]
-    verygood = ratings[1]
-    average = ratings[2]
-    poor = ratings[3]
-    terrible = ratings[4]
-    rating_excellent = excellent.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Excellent ratings: %s' %rating_excellent.strip())
-    rating_verygood = verygood.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Very good ratings: %s' %rating_verygood.strip())
-    rating_average = average.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Average ratings: %s' %rating_average.strip())
-    rating_poor = poor.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Poor ratings: %s' %rating_poor.strip())
-    rating_terrible = terrible.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Terrible ratings: %s' %rating_terrible.strip())
-    #see reviews for different types of people
-    peopletypes = databox.findAll('div', {'class':'filter_connection_wrapper'})
-    families = peopletypes[0]
-    couples = peopletypes[1]
-    solo = peopletypes[2]
-    business = peopletypes[3]
-    f = families.find('div', {'class':'value'}).find(text=True)
-    log.info('Family ratings: %s' %f.strip())
-    c = couples.find('div', {'class':'value'}).find(text=True)
-    log.info('Couple ratings: %s' %c.strip())
-    s = solo.find('div', {'class':'value'}).find(text=True)
-    log.info('Solo ratings: %s' %s.strip())
-    b = business.find('div', {'class':'value'}).find(text=True)
-    log.info('Business ratings: %s' %b.strip())
-    #rating summary
-    summaries = databox.findAll('li')
-    sleep_quality = summaries[0].find('img')
-    stars = sleep_quality['alt']
-    log.info('Sleep Quality2: %s' %stars)
-def scrape_hotels(city,  state, datadir='data/'):
-    """Runs the main scraper code
-    Parameters
-    ----------
-    city : str
-        The name of the city for which to scrape hotels.
-    state : str
-        The state in which the city is located.
-    datadir : str, default is 'data/'
-        The directory under which to save the downloaded html.
-    """
 
+if __name__ == "__main__":
     # Get current directory
     current_dir = os.getcwd()
     # Create datadir if does not exist
-    if not os.path.exists(os.path.join(current_dir, datadir)):
-        os.makedirs(os.path.join(current_dir, datadir))
+    if not os.path.exists(os.path.join(current_dir, args.datadir)):
+        os.makedirs(os.path.join(current_dir, args.datadir))
 
     # Get URL to obtaint the list of hotels in a specific city
-    city_url = get_city_page(city, state, datadir)
-    c = 0
+    city_url = get_city_page(args.city, args.state)
+    c=0
     while(True):
-        c += 1
-        html = get_hotellist_page(city_url, c, city, datadir)
+        c +=1
+        html = get_hotellist_page(city_url,c)
         city_url = parse_hotellist_page(html)
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Scrape tripadvisor')
-    parser.add_argument('-datadir', type=str,
-                        help='Directory to store raw html files',
-                        default="data/")
-    parser.add_argument('-state', type=str,
-                        help='State for which the hotel data is required.',
-                        required=True)
-    parser.add_argument('-city', type=str,
-                        help='City for which the hotel data is required.',
-                        required=True)
-
-    args = parser.parse_args()
-    scrape_hotels(args.city, args.state, args.datadir)
