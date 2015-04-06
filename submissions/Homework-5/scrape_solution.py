@@ -171,7 +171,7 @@ def parse_review(url, name):
     name['Poor ratings'] = rating_poor
     rating_terrible = (terrible.find('span', {'class':'compositeCount'}).find(text=True)).strip()
     name['Terrible ratings'] = rating_terrible
-    avg_score = int(int(rating_excellent)*5 + int(rating_verygood)*4 + int(rating_average)*3 + int(rating_poor)*2 + int(rating_terrible)*1)/int(int(rating_excellent)+int(rating_verygood)+int(rating_average)+int(rating_poor)+int(rating_terrible))
+    avg_score = float(float(rating_excellent)*5 + float(rating_verygood)*4 + float(rating_average)*3 + float(rating_poor)*2 + float(rating_terrible)*1)/float(float(rating_excellent)+float(rating_verygood)+float(rating_average)+float(rating_poor)+float(rating_terrible))
     name['Average score'] = avg_score
     #see reviews for different types of people
     peopletypes = databox.findAll('div', {'class':'filter_connection_wrapper'})
