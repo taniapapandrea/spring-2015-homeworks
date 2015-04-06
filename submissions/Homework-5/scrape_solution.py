@@ -187,7 +187,22 @@ def parse_review(url):
     summaries = databox.findAll('li')
     sleep_quality = summaries[0].find('img')
     stars = sleep_quality['alt']
-    log.info('Sleep Quality2: %s' %stars)
+    log.info('Sleep Quality: %s' %stars)
+    location = summaries[1].find('img')
+    stars1 = location['alt']
+    log.info('Location: %s' %stars1)
+    rooms = summaries[2].find('img')
+    stars2 = location['alt']
+    log.info('Rooms: %s' %stars2)
+    service = summaries[3].find('img')
+    stars3 = location['alt']
+    log.info('Service': %stars3)
+    value = summaries[3].find('img')
+    stars4 = value['alt']
+    log.info('Value : %s' %stars4)
+    cleanliness = summaries[4].find(img.png)
+    stars5 = value['alt']
+    log-info('Cleanliness': %stars4)
 def scrape_hotels(city,  state, datadir='data/'):
     """Runs the main scraper code
     Parameters
