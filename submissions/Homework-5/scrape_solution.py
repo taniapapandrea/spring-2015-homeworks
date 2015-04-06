@@ -161,15 +161,15 @@ def parse_review(url, name):
     average = ratings[2]
     poor = ratings[3]
     terrible = ratings[4]
-    rating_excellent = (excellent.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    rating_excellent = (excellent.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
     name['Excellent ratings'] = rating_excellent
-    rating_verygood = (verygood.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    rating_verygood = (verygood.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
     name['Very good ratings'] = rating_verygood
-    rating_average = (average.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    rating_average = (average.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
     name['Average ratings'] = rating_average
-    rating_poor = (poor.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    rating_poor = (poor.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
     name['Poor ratings'] = rating_poor
-    rating_terrible = (terrible.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    rating_terrible = (terrible.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
     name['Terrible ratings'] = rating_terrible
     avg_score = float(float(rating_excellent)*5 + float(rating_verygood)*4 + float(rating_average)*3 + float(rating_poor)*2 + float(rating_terrible)*1)/float(float(rating_excellent)+float(rating_verygood)+float(rating_average)+float(rating_poor)+float(rating_terrible))
     name['Average score'] = avg_score
