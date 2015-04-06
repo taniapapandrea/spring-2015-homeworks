@@ -199,9 +199,9 @@ def parse_review(url):
     log.info('Service: %s:' %stars3)
     value = summaries[4].find('img')
     stars4 = value['alt']
-    log.info('Value : %s' %stars4)
-    cleanliness = summaries[5].find(img.png)
-    stars5 = value['alt']
+    log.info('Value2: %s' %stars4)
+    cleanliness = summaries[5].find('img')
+    stars5 = cleanliness['alt']
     log-info('Cleanliness: %s' %stars5)
 def scrape_hotels(city,  state, datadir='data/'):
     """Runs the main scraper code
