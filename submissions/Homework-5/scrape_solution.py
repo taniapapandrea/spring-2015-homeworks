@@ -159,16 +159,16 @@ def parse_review(url):
     average = ratings[2]
     poor = ratings[3]
     terrible = ratings[4]
-    rating_excellent = excellent.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Excellent ratings: %s' %rating_excellent.strip())
-    rating_verygood = verygood.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Very good ratings: %s' %rating_verygood.strip())
-    rating_average = average.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Average ratings: %s' %rating_average.strip())
-    rating_poor = poor.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Poor ratings: %s' %rating_poor.strip())
-    rating_terrible = terrible.find('span', {'class':'compositeCount'}).find(text=True)
-    log.info('Terrible ratings: %s' %rating_terrible.strip())
+    rating_excellent = (excellent.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    log.info('Excellent ratings: %s' %rating_excellent)
+    rating_verygood = (verygood.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    log.info('Very good ratings: %s' %rating_verygood)
+    rating_average = (average.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    log.info('Average ratings: %s' %rating_average)
+    rating_poor = (poor.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    log.info('Poor ratings: %s' %rating_poor)
+    rating_terrible = (terrible.find('span', {'class':'compositeCount'}).find(text=True)).strip()
+    log.info('Terrible ratings: %s' %rating_terrible)
     #see reviews for different types of people
     peopletypes = databox.findAll('div', {'class':'filter_connection_wrapper'})
     families = peopletypes[0]
@@ -203,6 +203,8 @@ def parse_review(url):
     cleanliness = summaries[5].find('img')
     stars5 = cleanliness['alt']
     log.info('Cleanliness: %s' %stars5)
+    #average score
+    avg_score = 
 def scrape_hotels(city,  state, datadir='data/'):
     """Runs the main scraper code
     Parameters
