@@ -136,7 +136,7 @@ def parse_hotellist_page(html, hotels):
     # check if this is the last page
     if div.find("span", {"class" : "guiArw pageEndNext"}):
         log.info("We reached last page")
-        sys.exit()
+        return None
     # If not, return the url to the next page
     hrefs = div.findAll('a', href= True)
     for href in hrefs:
@@ -162,50 +162,50 @@ def parse_review(url, name):
     poor = ratings[3]
     terrible = ratings[4]
     rating_excellent = (excellent.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
-    name['Excellent ratings'] = rating_excellent
+    name['Excellent_ratings'] = rating_excellent
     rating_verygood = (verygood.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
-    name['Very good ratings'] = rating_verygood
+    name['Verygood_ratings'] = rating_verygood
     rating_average = (average.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
-    name['Average ratings'] = rating_average
+    name['Average_ratings'] = rating_average
     rating_poor = (poor.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
-    name['Poor ratings'] = rating_poor
+    name['Poor_ratings'] = rating_poor
     rating_terrible = (terrible.find('span', {'class':'compositeCount'}).find(text=True)).strip().replace(",","")
-    name['Terrible ratings'] = rating_terrible
+    name['Terrible_ratings'] = rating_terrible
     avg_score = float(float(rating_excellent)*5 + float(rating_verygood)*4 + float(rating_average)*3 + float(rating_poor)*2 + float(rating_terrible)*1)/float(float(rating_excellent)+float(rating_verygood)+float(rating_average)+float(rating_poor)+float(rating_terrible))
-    name['Average score'] = avg_score
+    name['Average_score'] = avg_score
     #see reviews for different types of people
     peopletypes = databox.findAll('div', {'class':'filter_connection_wrapper'})
     families = peopletypes[0]
     couples = peopletypes[1]
     solo = peopletypes[2]
     business = peopletypes[3]
-    f = (families.find('div', {'class':'value'}).find(text=True)).strip()
-    name['Family ratings'] = f
-    c = (couples.find('div', {'class':'value'}).find(text=True)).strip()
-    name['Couple ratings'] = c
-    s = (solo.find('div', {'class':'value'}).find(text=True)).strip()
-    name['Solo ratings'] = s
-    b = (business.find('div', {'class':'value'}).find(text=True)).strip()
-    name['Business ratings'] = b
+    f = (families.find('div', {'class':'value'}).find(text=True)).strip().replace(",", "")
+    name['Family_ratings'] = f
+    c = (couples.find('div', {'class':'value'}).find(text=True)).strip().replace(",", "")
+    name['Couple_ratings'] = c
+    s = (solo.find('div', {'class':'value'}).find(text=True)).strip().replace(",", "")
+    name['Solo_ratings'] = s
+    b = (business.find('div', {'class':'value'}).find(text=True)).strip().replace(",", "")
+    name['Business_ratings'] = b
     #rating summary
     summaries = databox.findAll('li')
     sleep_quality = summaries[0].find('img')
-    stars = sleep_quality['alt']
-    name['Sleep Quality'] = stars
+    stars = sleep_quality['alt'].split(' ')[0]
+    name['Sleep_quality'] = stars
     location = summaries[1].find('img')
-    stars1 = location['alt']
+    stars1 = location['alt'].split(' ')[0]
     name['Location']=stars1
     rooms = summaries[2].find('img')
-    stars2 = location['alt']
+    stars2 = location['alt'].split(' ')[0]
     name['Rooms']=stars2
     service = summaries[3].find('img')
-    stars3 = location['alt']
+    stars3 = location['alt'].split(' ')[0]
     name['Service']=stars3
     value = summaries[4].find('img')
-    stars4 = value['alt']
+    stars4 = value['alt'].split(' ')[0]
     name['Value']=stars4
     cleanliness = summaries[5].find('img')
-    stars5 = cleanliness['alt']
+    stars5 = cleanliness['alt'].split(' ')[0]
     name['Cleanliness']=stars5
     return name
 
@@ -230,12 +230,17 @@ def scrape_hotels(city,  state, datadir='data/'):
 
     # Get URL to obtaint the list of hotels in a specific city
     city_url = get_city_page(city, state, datadir)
+
     c = 0
     while(True):
         c += 1
         html = get_hotellist_page(city_url, c, city, datadir)
-        (city_url, hotels) = parse_hotellist_page(html, hotels)
+        city_url = parse_hotellist_page(html, hotels)
+        if city_url == None:
+            break
     return hotels
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Scrape tripadvisor')
