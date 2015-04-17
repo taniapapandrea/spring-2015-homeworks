@@ -124,7 +124,7 @@ def parse_shop_page(html, results, shop):
 def hats():
     results={}
     i=1
-    while(i<2):
+    while(i<5):
         html = get_result_page(i)
         parse_result_page(html, results, i)
         i += 1
