@@ -125,17 +125,16 @@ def parse_shop_page(html, results, shop):
 #avg num items per section
 
 #get hats data
-def hats():
+def hats(numpages):
     results={}
     i=1
-    while(i<2):
+    while(i<numpages+1):
         html = get_result_page(i)
         parse_result_page(html, results, i)
         i += 1
     ranks = results.keys()
     names = results.values()
     for rank in ranks:
-        print(names[rank-1]['Name'])
         shop_html = get_shop_page(names[rank-1]['Name'])
         parse_shop_page(shop_html, results, rank)
     return results
