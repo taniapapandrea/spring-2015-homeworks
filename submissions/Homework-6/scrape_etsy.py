@@ -31,7 +31,7 @@ def parse_result_page(html, results, page):
     for shop in listings:
         name = shop.find('a', href=True).find(text=True).strip()
         rank += 1
-        results[name]={'Rank':rank}
+        results[rank]={'Name':name}
 
 #returns html for the given shop name
 def get_shop_page(name):
@@ -93,24 +93,28 @@ def parse_shop_page(html, results, shop):
     results[shop]['Rating']=avgreviews
 
     #sales
-    sales=-1
+    s=-1
     salesclass = html.find('li', {'class':'sales '})
     if not (salesclass is None or len(salesclass)==0):
         href = salesclass.find('a', href=True)
         if not (href is None or len(href)==0) and href.find(text=True):
             sales = href.find(text=True).strip()
             sales = sales[:-6].replace(",","")
-    results[shop]['Sales']=int(sales)
-
+            if not (sales is None or len(sales)==0):
+                s = int(sales)
+    results[shop]['Sales']=s
+    
     #admirers
-    admirers=-1
+    a=-1
     adclass = html.find('li', {'class':'admirers'})
     if not (adclass is None or len(adclass)==0):
         href = adclass.find('a', href=True)
         if not (href is None or len(href)==0) and href.find(text=True):
             admirers = href.find(text=True).strip()
             admirers = admirers[:-9].replace(",","")
-    results[shop]['Admirers']=int(admirers)
+            if not (admirers is None or len(admirers)==0):
+                a = int(admirers)
+    results[shop]['Admirers']=a
 
     #accepts gift cards?
     gc=False
@@ -124,11 +128,14 @@ def parse_shop_page(html, results, shop):
 def hats():
     results={}
     i=1
-    while(i<5):
+    while(i<2):
         html = get_result_page(i)
         parse_result_page(html, results, i)
         i += 1
-    for entry in results.keys():
-        shop_html = get_shop_page(entry)
-        parse_shop_page(shop_html, results, entry)
-    return(results)
+    ranks = results.keys()
+    names = results.values()
+    for rank in ranks:
+        print(names[rank-1]['Name'])
+        shop_html = get_shop_page(names[rank-1]['Name'])
+        parse_shop_page(shop_html, results, rank)
+    return results
