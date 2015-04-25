@@ -6,13 +6,16 @@ import sys
 import time
 import argparse
 import logging
-import requests
 import time
 import datetime
+import requests
 from BeautifulSoup import BeautifulSoup
+import matplotlib.pyplot as plt
 
 base_url = "http://www.etsy.com/"
 user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36"
+
+shops=[]
 
 #returns html for the given page number
 def get_result_page(page):
@@ -27,14 +30,18 @@ def get_result_page(page):
 def parse_result_page(html, results, page):
     nonads = html.find('div', {'id':'search-results', 'class':'clearfix'})
     listings = nonads.findAll('div', {'class':'listing-maker'})
-    rank=(page-1)*45
+    rank=len(results) + 1
     for shop in listings:
         name = shop.find('a', href=True).find(text=True).strip()
-        rank += 1
-        results[rank]={'Name':name}
+        if not name in shops:
+            shops.append(name)
+            results[rank]={'Name':name}
+            rank += 1
+    print('shops so far ', len(results))
 
-#returns html for the given shop name
+#returns html for the given shop name, as long as it hasn't been visited yet
 def get_shop_page(name):
+    print(name)
     url="https://www.etsy.com/shop/"+str(name)
     headers = {'User-Agent':user_agent}
     response = requests.get(url, headers=headers)
@@ -45,11 +52,18 @@ def get_shop_page(name):
 #get data from shop page
 def parse_shop_page(html, results, shop):
     #total number of items
+    items=-1
     sections = html.find('div', {'id':'shop-sections', 'class':'section'})
     if not (sections is None or len(sections)==0):
-        items = int(sections.find('span', {'class':'count'}).find(text=True).strip()[:-6])
-    else:
-        items= -1
+        i = sections.find('span', {'class':'count'})
+        if not (i is None or len(i)==0):
+            i = i.find(text=True)
+            if not (i is None or len(i)==0):
+                i = i.strip()
+                if not (i is None or len(i)==0):
+                    i = i[:-6]
+                    if not (i is None or len(i)==0):
+                        items = int(i)
     results[shop]['Num_items'] = items
 
     #number of sections
@@ -79,7 +93,8 @@ def parse_shop_page(html, results, shop):
         today=datetime.datetime.now()
         age = str(today-start)
         fields=age.split(' ')
-        age=int(fields[0])
+        if len(fields)>2:
+            age=int(fields[0])
     results[shop]['Age']=age
     
     #reviews
@@ -131,7 +146,9 @@ def hats(numpages):
     while(i<numpages+1):
         html = get_result_page(i)
         parse_result_page(html, results, i)
+        print('page ', i)
         i += 1
+    print(results)
     ranks = results.keys()
     names = results.values()
     for rank in ranks:
