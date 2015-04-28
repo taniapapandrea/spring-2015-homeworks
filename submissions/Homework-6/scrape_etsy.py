@@ -11,6 +11,7 @@ import datetime
 import requests
 from BeautifulSoup import BeautifulSoup
 import matplotlib.pyplot as plt
+import numpy as np
 
 base_url = "http://www.etsy.com/"
 user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.76 Safari/537.36"
@@ -26,6 +27,15 @@ def get_result_page(page):
     soup = BeautifulSoup(html)
     return soup
 
+#returns html for the given page number
+def get_second_result_page(page):
+    url="https://www.etsy.com/search?q=door+knobs&page="+str(page)
+    headers = {'User-Agent':user_agent}
+    response = requests.get(url, headers=headers)
+    html = response.text.encode('utf-8')
+    soup = BeautifulSoup(html)
+    return soup
+
 #get ranked list of shops from search result page
 def parse_result_page(html, results, page):
     nonads = html.find('div', {'id':'search-results', 'class':'clearfix'})
@@ -33,6 +43,7 @@ def parse_result_page(html, results, page):
     rank=len(results) + 1
     for shop in listings:
         name = shop.find('a', href=True).find(text=True).strip()
+        print(name)
         if not name in shops:
             shops.append(name)
             results[rank]={'Name':name}
@@ -41,7 +52,6 @@ def parse_result_page(html, results, page):
 
 #returns html for the given shop name, as long as it hasn't been visited yet
 def get_shop_page(name):
-    print(name)
     url="https://www.etsy.com/shop/"+str(name)
     headers = {'User-Agent':user_agent}
     response = requests.get(url, headers=headers)
@@ -49,8 +59,37 @@ def get_shop_page(name):
     soup = BeautifulSoup(html)
     return soup
 
+#returns a list of all the prices of in-stock items for a given shop
+def prices(name):
+    html = get_shop_page(name)
+    #number of pages
+    pages = html.find('ul', {'class':'pages'})
+    if pages is None:
+        urls = ['https://www.etsy.com/shop/'+str(name)]
+    else:
+        urls=[]
+        lastpage = pages.findAll('a', href=True)[-1]
+        p = int(lastpage.find(text=True).strip())
+        for page in range(p):
+            page=page+1
+            url = 'https://www.etsy.com/shop/'+str(name)+'?page='+str(page)
+            urls.append(url)
+    prices=[]
+    for url in urls:
+        headers = {'User-Agent':user_agent}
+        response = requests.get(url, headers=headers)
+        html = response.text.encode('utf-8')
+        html = BeautifulSoup(html)
+        pricelist = html.findAll('span', {'class':'currency-value'})
+        for x in pricelist:
+            price = x.find(text=True).strip()
+            s = str(price)
+            f=s.split('.')
+            prices.append(int(f[0]))
+    return prices
+
 #get data from shop page
-def parse_shop_page(html, results, shop):
+def parse_shop_page(html, results, shop, name):
     #total number of items
     items=-1
     sections = html.find('div', {'id':'shop-sections', 'class':'section'})
@@ -136,8 +175,11 @@ def parse_shop_page(html, results, shop):
     if html.find('div', {'class':'shop-giftcard-callout clear'}):
        gc=True
     results[shop]['Gift_card']=gc
-#avg price of sold items vs avg price of inventory
-#avg num items per section
+    
+    #average price
+    li = prices(str(name))
+    results[shop]['Prices'] = li
+    print(shop)
 
 #get hats data
 def hats(numpages):
@@ -145,6 +187,24 @@ def hats(numpages):
     i=1
     while(i<numpages+1):
         html = get_result_page(i)
+        parse_result_page(html, results, i)
+        print('page ', i)
+        i += 1
+    print(results)
+    ranks = results.keys()
+    names = results.values()
+    for rank in ranks:
+        name = names[rank-1]['Name']
+        shop_html = get_shop_page(name)
+        parse_shop_page(shop_html, results, rank, name)
+    return results
+
+#get hats data
+def knobs(numpages):
+    results={}
+    i=1
+    while(i<numpages+1):
+        html = get_second_result_page(i)
         parse_result_page(html, results, i)
         print('page ', i)
         i += 1
