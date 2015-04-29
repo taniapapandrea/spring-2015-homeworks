@@ -29,7 +29,7 @@ def get_result_page(page):
 
 #returns html for the given page number
 def get_second_result_page(page):
-    url="https://www.etsy.com/search?q=door+knobs&page="+str(page)
+    url="https://www.etsy.com/search?q=abstract+painting&page="+str(page)
     headers = {'User-Agent':user_agent}
     response = requests.get(url, headers=headers)
     html = response.text.encode('utf-8')
@@ -64,28 +64,20 @@ def prices(name):
     html = get_shop_page(name)
     #number of pages
     pages = html.find('ul', {'class':'pages'})
-    if pages is None:
-        urls = ['https://www.etsy.com/shop/'+str(name)]
-    else:
-        urls=[]
-        lastpage = pages.findAll('a', href=True)[-1]
-        p = int(lastpage.find(text=True).strip())
-        for page in range(p):
-            page=page+1
-            url = 'https://www.etsy.com/shop/'+str(name)+'?page='+str(page)
-            urls.append(url)
+    url='https://www.etsy.com/shop/'+str(name)
     prices=[]
-    for url in urls:
-        headers = {'User-Agent':user_agent}
-        response = requests.get(url, headers=headers)
-        html = response.text.encode('utf-8')
-        html = BeautifulSoup(html)
-        pricelist = html.findAll('span', {'class':'currency-value'})
-        for x in pricelist:
-            price = x.find(text=True).strip()
-            s = str(price)
-            f=s.split('.')
-            prices.append(int(f[0]))
+    headers = {'User-Agent':user_agent}
+    response = requests.get(url, headers=headers)
+    html = response.text.encode('utf-8')
+    html = BeautifulSoup(html)
+    pricelist = html.findAll('span', {'class':'currency-value'})
+    for x in pricelist:
+        price = x.find(text=True).strip()
+        s = str(price)
+        f=s.split('.')
+        f=f[0]
+        f=f.replace(',','')
+        prices.append(int(f))
     return prices
 
 #get data from shop page
@@ -200,7 +192,7 @@ def hats(numpages):
     return results
 
 #get hats data
-def knobs(numpages):
+def paintings(numpages):
     results={}
     i=1
     while(i<numpages+1):
@@ -212,6 +204,7 @@ def knobs(numpages):
     ranks = results.keys()
     names = results.values()
     for rank in ranks:
-        shop_html = get_shop_page(names[rank-1]['Name'])
-        parse_shop_page(shop_html, results, rank)
+        name = names[rank-1]['Name']
+        shop_html = get_shop_page(name)
+        parse_shop_page(shop_html, results, rank, name)
     return results
